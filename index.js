@@ -4,22 +4,23 @@ const randomWords = require('random-words');
 
 const users = [];
 
-function generateUsername(firstname, surname) {
-  return `${firstname[0]}-${surname}`.toLowerCase();
-}
+// function generateUsername(firstname, surname) {
+//   return `${firstname[0]}-${surname}`.toLowerCase();
+// }
 
 fs.createReadStream('input.csv')
   .pipe(csv())
   .on('data', function(row) {
-    const username = generateUsername(row.Firstname, row.Surname);
-    const password = randomWords(3).join('-');
+    // const username = generateUsername(row.Review, row.Surname);
+    // const password = randomWords(3).join('-');
 
     const user = {
-      username,
+      
+
       firstname: row.Firstname,
-      surname: row.Surname,
-      roles: row.Roles,
-      password,
+      keywords: 'QR',
+      sentiment: 0.89,
+      QRsentiment: 0.2,
     };
 
     users.push(user);
@@ -30,7 +31,7 @@ fs.createReadStream('input.csv')
   });
 
 function writeToCSVFile(users) {
-  const filename = 'output.csv';
+  const filename = 'outputreview.csv';
 
   fs.writeFile(filename, extractAsCSV(users), err => {
     if (err) {
@@ -42,9 +43,9 @@ function writeToCSVFile(users) {
 }
 
 function extractAsCSV(users) {
-  const header = ['Username, Password, Roles'];
+  const header = ['Reviews, Keywords, Sentiment, Sentiment of QR'];
   const rows = users.map(
-    user => `${user.username}, ${user.password}, ${user.roles}`
+    user => `${user.firstname}, ${user.keywords}, ${user.sentiment}, ${user.QRsentiment}`
   );
 
   return header.concat(rows).join('\n');
