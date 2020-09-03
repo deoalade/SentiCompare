@@ -1,0 +1,24 @@
+{
+  "name": "comparesentiment",
+  "version": "1.0.0",
+  "description": "\"# SentiCompare\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deoalade/SentiCompare.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/deoalade/SentiCompare/issues"
+  },
+  "homepage": "https://github.com/deoalade/SentiCompare#readme",
+  "dependencies": {
+    "csv-parser": "^2.3.3",
+    "random-words": "^1.1.1"
+  }
+}
