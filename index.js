@@ -1,12 +1,7 @@
 const fs = require('fs');
-const fs2 = require('fs');
 const csv = require('csv-parser');
 const randomWords = require('random-words');
 const users = [];
-
-// function generateUsername(firstname, surname) {
-//   return `${firstname[0]}-${surname}`.toLowerCase();
-// }
 
 async function quickstart(review) {
     // Imports the Google Cloud client library
@@ -15,6 +10,7 @@ async function quickstart(review) {
     // Instantiates a client
     const client = new language.LanguageServiceClient();
   
+    //Assign's the review as the document data source
     const document = {
       content: review,
       type: 'PLAIN_TEXT',
@@ -27,7 +23,7 @@ async function quickstart(review) {
     const sentiment = result.documentSentiment;
     
   
-    
+    //Output overall sentiment to console
     console.log(`#########################`);
     console.log(`Sentiment score: ${sentiment.score}`);
     console.log(`Sentiment magnitude: ${sentiment.magnitude}`);
@@ -39,95 +35,86 @@ async function quickstart(review) {
         console.log(`  Magnitude: ${sentence.sentiment.magnitude}`);
     });
 
-    //console.log(`########### Entity Sentiment ##############`);
+    //Output Entity Sentiments to log
     const sentities = sentityresult.entities;
     console.log('Entities and sentiments:');
     sentities.forEach(entity => {
-      console.log(`  Name: ${entity.name}`);
+      console.log(`  Name-: ${entity.name}`);
       console.log(`  Score: ${entity.sentiment.score}`);});
     
+    //return objects from Google NL API
     return [sentiment.score, sentities ]
 
   }
 
+  //Initiate fs writer instance
   var writestream = fs.createWriteStream('outputfile.csv');
-  writestream.write("Comment,Sentiment Score,QR Sentiment,Entity Sentiments" + "\n")
+  writestream.write("Comment,Overall Sentiment,QR,Email,Huawei,NHS,Isle of Wight,All Sentiments" + "\n")
 
- fs.createReadStream('input.csv')
-  .pipe(csv())
-  .on('data', async function(row) {
+  //Begin Read Stream for CSV
+  fs.createReadStream('input.csv')
+    .pipe(csv())
+    .on('data', async function(row) {
 
+      //Create an instance of the quickstart function
+      const sentimentAnalysis = await quickstart(row.Firstname);
 
-    const sentimentAnalysis = await quickstart(row.Firstname);
+      var hasqr = 'N/A';
+      var hasnhs = 'N/A';
+      var hasiow = 'N/A'; 
+      var hashw = 'N/A';
+      var hasemail = 'N/A';
+      var espair = '';
 
-    var hasqr = 'N/A';
-    var espair = '';
+      //Loop through Result Set for Entity Sentiments and Scores
+      sentimentAnalysis[1].forEach(entity => {
+        espair = espair + entity.name + ":"+ entity.sentiment.score + ", ";
+        var entityname = entity.name.toLowerCase();
 
-    sentimentAnalysis[1].forEach(entity => {
-          espair = espair + entity.name + ":"+ entity.sentiment.score + ", ";
-            var entityname = entity.name.toLowerCase();
-            if(entityname.includes('qr')){
-                hasqr = entity.sentiment.score;
-            }
-    });
+        //Check for QR Entity Sentiment Score
+        if(entityname.includes('qr')){
+          hasqr = entity.sentiment.score;
+        }
 
-    
-    //console.log("!!!!!!!!!!!!!!!!!!!!" + espair);
+        //Check for Isle of Wight Entity Sentiment Score
+        else if(entityname.includes('isle of wight')){
+          hasiow = entity.sentiment.score;
+        }
 
-        
-        const user = {
+        //Check for Email Entity Sentiment Score
+        else if(entityname.includes('email')){
+          hasemail = entity.sentiment.score;
+        }
+
+        //Check for Huawei Entity Sentiment Score
+        else if(entityname.includes('huawei')){
+          hashw = entity.sentiment.score;
+        }
+
+        //Check for NHS Entity Sentiment Score
+        else if(entityname.includes('nhs')){
+          hasnhs = entity.sentiment.score;
+        }
+      });
+
+      // Create User Object
+      const user = {
         firstname: row.Firstname,
-      //   sentiment: sentimentAnalysis[0],
-      //   entitySentiment: espair,
         sentiment: sentimentAnalysis[0],
         entitySentiment: espair,
       };
+      
+      // Output User details ont CSV Line
+      var comment = user.firstname.replace(/"/g, '""');
+      var csvline = "\"" + comment + "\"" + ","  + user.sentiment + "," + hasqr + "," + hasemail + "," + hashw + ","+ hasnhs + ","+ hasiow + "," + "\""  + user.entitySentiment + "\"" + "\n";
+      const outputfile = "outputnhs.csv";
 
-    
-    
+      "Comment,Overall Sentiment,QR,Email,Huawei,NHS,Isle of Wight,All Sentiments"
 
-    /////////////////////////////////console.log(user.firstname);
+      writestream.write(csvline);
 
-    
-
-    //users.push(user);
-    
-    var csvline = "\"" + user.firstname + "\"" + ","  + user.sentiment + "," + hasqr + "," + "\""  + user.entitySentiment + "\"" + "\n";
-    const outputfile = "outputnhs.csv";
-
-    // fs.writeFile(outputfile, csvline ), err => {
-    //     if (err) {
-    //       console.log('Error writing to csv file', err);
-    //     } else {
-    //       console.log(`saved as ${filename}`);
-    //     }
-    //   };
-
-    writestream.write(csvline);
-
-  })
+    })
   .on('end', function() {
-    //console.table(users);
-    //writeToCSVFile(users);
+    //On end Callback Function
   });
 
-function writeToCSVFile(users) {
-  const filename = 'outputreview.csv';
-
-  fs.writeFile(filename, extractAsCSV(users), err => {
-    if (err) {
-      console.log('Error writing to csv file', err);
-    } else {
-      console.log(`saved as ${filename}`);
-    }
-  });
-}
-
-function extractAsCSV(users) {
-  const header = ['Reviews, Sentiment, Entities & Sentiments'];
-  const rows = users.map(
-    user => `${user.firstname},  ${user.sentiment}, ${user.entitySentiment}`
-  );
-
-  return header.concat(rows).join('\n');
-}
